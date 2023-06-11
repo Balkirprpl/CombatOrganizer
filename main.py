@@ -11,6 +11,8 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import addcreature, loadencounter
 
+characters = []
+
 class Creature:
     name = ''
     hp = 0
@@ -28,7 +30,7 @@ class Creature:
     id = 0
     xp = 0
 
-    def __init__(self, name, hp, ac, speed, str_, dex, con, int_, wis,char, prof, skills, actions, xp, notes):
+    def __init__(self, name, hp, ac, speed, str_, dex, con, int_, wis, cha, prof, pp, xp, skills, notes, abilities, actions):
         self.name = name
         self.hp = hp
         self.ac = ac
@@ -38,11 +40,17 @@ class Creature:
         self.con = con
         self.int_ = int_
         self.wis = wis
+        print("trying to add something")
+        print("trying to add something")
         self.cha = cha
         self.prof = prof
+        self.pp = pp
         self.id = len(characters)
         self.xp = xp
         self.notes = notes
+        self.abilities = abilities
+        self.actions = actions
+        self.skills = skills
         
 class Ui_Dialog(object):
 
@@ -182,10 +190,16 @@ class Ui_Dialog(object):
         def open_damage():
             print('damage')
 
+        def refresh_loaded_characters():
+            for i in characters:
+                self.listWidget.addItem("{0} {1}".format(i.id, i.name))
+
         def add_creature():
             print("correct")
             creature = Creature(self.ui.name.toPlainText(),self.ui.hp.toPlainText(),self.ui.ac.toPlainText(),self.ui.speed.toPlainText(), self.ui.str.toPlainText(), self.ui.dex.toPlainText(), self.ui.con.toPlainText(), self.ui.int_2.toPlainText(),self.ui.wis.toPlainText(),self.ui.cha.toPlainText(),self.ui.prof.toPlainText(),self.ui.pp.toPlainText(),self.ui.xp.toPlainText(),self.ui.skills.toPlainText(),self.ui.notes.toPlainText(),self.ui.abilities.toPlainText(),self.ui.actions.toPlainText())
-            
+            print("trying to add something")
+            characters.append(creature)
+            refresh_loaded_characters()
 
         
             
