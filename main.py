@@ -9,9 +9,39 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-import addcreature, loadencounter
+import addcreature, loadencounter, sheet
 
-characters = []
+
+class Easyq:
+    def __init__(self):
+        self.content = []
+        self.size = 0
+
+    def add(self, p, value):
+
+        if self.size == 0:
+            self.content.append((p, str(p) + " - " + value)) 
+            self.size += 1
+            return
+        for i in range(self.size):
+            x = self.content[i][0]
+            if p >= x:
+                self.content.insert(i, (p,  str(p) + " - " + value))
+                self.size += 1
+                return
+        self.content.append((p, str(p) + " : " + value))
+        return
+            
+
+    def clear():
+        size = 0
+        self.content.clear()
+
+    def getList(self):
+        r = []
+        for i in self.content:
+            r.append(i[1])
+        return r
 
 class Creature:
     name = ''
@@ -40,8 +70,6 @@ class Creature:
         self.con = con
         self.int_ = int_
         self.wis = wis
-        print("trying to add something")
-        print("trying to add something")
         self.cha = cha
         self.prof = prof
         self.pp = pp
@@ -52,6 +80,9 @@ class Creature:
         self.actions = actions
         self.skills = skills
         
+characters = []
+initiative_list = Easyq()
+
 class Ui_Dialog(object):
 
     def setupUi(self, Dialog):
@@ -164,15 +195,18 @@ class Ui_Dialog(object):
         self.groupBox.setMinimumSize(QtCore.QSize(197, 269))
         self.groupBox.setMaximumSize(QtCore.QSize(197, 269))
         self.groupBox.setObjectName("groupBox")
-        self.listView_3 = QtWidgets.QListView(self.groupBox)
+        self.listView_3 = QtWidgets.QListWidget(self.groupBox)
         self.listView_3.setGeometry(QtCore.QRect(0, 20, 191, 241))
         self.listView_3.setMinimumSize(QtCore.QSize(191, 241))
         self.listView_3.setMaximumSize(QtCore.QSize(191, 241))
         self.listView_3.setObjectName("listView_3")
         self.gridLayout.addWidget(self.groupBox, 0, 2, 4, 2)
+        self.windows = []
+        self.sheet_uis = []
 
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
+
 
         def open_addcreature():
             self.Dialog = QtWidgets.QDialog()
@@ -185,28 +219,102 @@ class Ui_Dialog(object):
             self.Dialog = QtWidgets.QDialog()
             self.ui = loadencounter.Ui_Dialog()
             self.ui.setupUi(self.Dialog)
+            self.ui.pushButton.clicked.connect(load_file)
             self.Dialog.show()
 
-        def open_damage():
-            print('damage')
-
-        def refresh_loaded_characters():
-            for i in characters:
-                self.listWidget.addItem("{0} {1}".format(i.id, i.name))
+        def load_file():
+            f = open(self.ui.plainTextEdit.toPlainText())
+            for i in f.readlines():
+                s = i.split("|")
+                creature = Creature(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11], s[12], s[13], s[14], s[15], s[16])
+                characters.append(creature)
+                self.listWidget.addItem("{0} : {1}".format(creature.id, creature.name))
 
         def add_creature():
-            print("correct")
             creature = Creature(self.ui.name.toPlainText(),self.ui.hp.toPlainText(),self.ui.ac.toPlainText(),self.ui.speed.toPlainText(), self.ui.str.toPlainText(), self.ui.dex.toPlainText(), self.ui.con.toPlainText(), self.ui.int_2.toPlainText(),self.ui.wis.toPlainText(),self.ui.cha.toPlainText(),self.ui.prof.toPlainText(),self.ui.pp.toPlainText(),self.ui.xp.toPlainText(),self.ui.skills.toPlainText(),self.ui.notes.toPlainText(),self.ui.abilities.toPlainText(),self.ui.actions.toPlainText())
-            print("trying to add something")
             characters.append(creature)
-            refresh_loaded_characters()
+            self.listWidget.addItem("{0} : {1}".format(creature.id, creature.name))
 
+        def creature_selected(item):
+            show_stats(characters[int(item.text()[0])])
+            self.textBrowser.setText(item.text())
+
+        def refresh_initiative_characters(recv):
+            self.listView_3.addItems(recv.getList())
+
+        def send():
+            self.listView_3.clear()
+            initiative_list.add(int(self.comboBox.currentText()), self.textBrowser.toPlainText())
+            refresh_initiative_characters(initiative_list)
+
+        def initiative_select(item):
+            t = item.text()
+            t = t.split("- ")
+            show_stats(characters[int(t[1][0])])
+
+        def open_sheet(item):
+            if "- " in item.text():
+                t = item.text()
+                t = t.split("- ")
+                creature = characters[int(t[1][0])]
+            else:
+                creature = characters[int(item.text()[0])]
+            print(creature.name)
+            self.windows.append(QtWidgets.QDialog())
+            i = len(self.windows) - 1
+            self.sheet_uis.append(sheet.Ui_Form())
+            self.sheet_uis[i].setupUi(self.windows[i])
+            self.sheet_uis[i].name.setText(creature.name)
+            self.sheet_uis[i].hp.setText(creature.hp)
+            self.sheet_uis[i].ac.setText(creature.ac)
+            self.sheet_uis[i].pp.setText(creature.pp)
+            self.sheet_uis[i].prof.setText(creature.prof)
+            self.sheet_uis[i].skills.setText(creature.skills)
+            self.sheet_uis[i].abilities.setText(creature.abilities)
+            self.sheet_uis[i].xp.setText(creature.xp)
+            self.sheet_uis[i].speed.setText(creature.speed)
+            self.sheet_uis[i].notes.setText(creature.notes)
+            self.sheet_uis[i].str.setText(creature.str_)
+            self.sheet_uis[i].str.setFontPointSize(8.25)
+            self.sheet_uis[i].dex.setText(creature.dex)
+            self.sheet_uis[i].dex.setFontPointSize(8.25)
+            self.sheet_uis[i].con.setText(creature.con)
+            self.sheet_uis[i].con.setFontPointSize(8.25)
+            self.sheet_uis[i].int_.setText(creature.int_)
+            self.sheet_uis[i].int_.setFontPointSize(8.25)
+            self.sheet_uis[i].wis.setText(creature.wis)
+            self.sheet_uis[i].wis.setFontPointSize(8.25)
+            self.sheet_uis[i].cha.setText(creature.cha)
+            self.sheet_uis[i].cha.setFontPointSize(8.25)
+            self.sheet_uis[i].actions.setText(creature.actions)
+            self.windows[i].show()
+            self.windows[i].finished.connect(remove_item, i)
+
+
+        def remove_item(i):
+            del self.windows[i]
+            del self.sheet_uis[i]
         
+        def show_stats(char):
+            self.textBrowser_2.setText('''{0}
+HP: {1}   AC: {2}  speed: {3} PP: {4}
+str: {5}
+dex: {6}
+con: {7}
+int: {8}
+wis: {9}
+cha: {10}
+'''.format(char.name,char.hp,char.ac,char.speed,char.pp, char.str_, char.dex, char.con, char.int_,char.wis,char.cha))
             
-        self.damagebutton.clicked.connect(open_damage)
+        #self.damagebutton.clicked.connect(open_damage)
         self.addcreaturebutton.clicked.connect(open_addcreature)
         self.loadencounterbutton.clicked.connect(open_loadencounter)
-        #self.sendbutton.clicked.connect(send)
+        self.sendbutton.clicked.connect(send)
+        self.listWidget.itemClicked.connect(creature_selected)
+        self.listWidget.itemDoubleClicked.connect(open_sheet)
+        self.listView_3.itemClicked.connect(initiative_select)
+        self.listView_3.itemDoubleClicked.connect(open_sheet)
+        
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
